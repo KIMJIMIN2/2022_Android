@@ -1,5 +1,6 @@
 package com.example.aop_part1_chapter02
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -32,7 +33,12 @@ class MainActivity : AppCompatActivity() {
 
             // Log.d("MainActivity","height:$height weight: $weight")
 
+            val intent = Intent(this, ResultActivity::class.java)
 
+            intent.putExtra("height",height)
+            intent.putExtra("weight",weight)
+
+            startActivity(intent)
         }
 
     }
