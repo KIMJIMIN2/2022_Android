@@ -6,9 +6,14 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.isVisible
+import androidx.room.Room
+import com.example.aop_part2_chapter04.model.History
 import java.lang.NumberFormatException
 
 class MainActivity : AppCompatActivity() {
@@ -21,9 +26,26 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.resultTextView)
     }
 
+    private val historyLayout: View by lazy {
+        findViewById<View>(R.id.historyLayout)
+    }
+
+    private val historyLinearLayout: LinearLayout by lazy {
+        findViewById<LinearLayout>(R.id.historyLinearLayout)
+    }
+
+    lateinit var db: AppDatabase
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        db = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java,
+            "historyDB"
+        ).build()
     }
 
     private var isOperator = false
@@ -121,8 +143,12 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "오류가 발생했습니다. ", Toast.LENGTH_SHORT).show()
             return
         }
-        val expressionTExt = expressionTextView.text.toString()
+        val expressionText = expressionTextView.text.toString()
         val resultText = calculaterExpression()
+
+        Thread(Runnable {
+            db.historyDao().insertHistory(History(null, expressionText, resultText))
+        }).start()
 
         resultTextView.text = ""
         expressionTextView.text = resultText
@@ -132,8 +158,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun historyButtonClicked(v: View) {
+        historyLayout.isVisible = true
+        historyLinearLayout.removeAllViews()
+
+        Thread(Runnable {
+            db.historyDao().getAll().reversed().forEach {
+                runOnUiThread {
+                    val historyView =
+                        LayoutInflater.from(this).inflate(R.layout.history_row, null, false)
+                    historyView.findViewById<TextView>(R.id.expressionTextView).text = it.expression
+                    historyView.findViewById<TextView>(R.id.resultTextView).text = "= ${it.result}"
+
+                    historyLinearLayout.addView(historyView)
+                }
+            }
+        }).start()
+    }
+
+    fun closeHistoryButtonClicked(v: View) {
+        historyLayout.isVisible = false
+    }
+
+    fun historyClearButtonClicked(v: View) {
+        historyLinearLayout.removeAllViews()
+        Thread(Runnable {
+            db.historyDao().deleteAll()
+        }).start()
 
     }
+
 
     private fun calculaterExpression(): String {
         val expressionTexts = expressionTextView.text.split(" ")
