@@ -9,6 +9,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import java.lang.NumberFormatException
 
 class MainActivity : AppCompatActivity() {
 
@@ -66,7 +67,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         expressionTextView.append(number)
-        // TODO resultTextView 실시간으로 계싼 결과를 넣어야 하는 기능
+        resultTextView.text = calculaterExpression()
 
     }
 
@@ -101,18 +102,74 @@ class MainActivity : AppCompatActivity() {
 
         isOperator = true
         hasOperator = true
-        
+
     }
 
     fun resultButtonClicked(v: View) {
+        val expressionTexts = expressionTextView.text.split(" ")
 
+        if (expressionTextView.text.isEmpty() || expressionTexts.size == 1) {
+            return
+        }
+
+        if (expressionTexts.size != 3 && hasOperator) {
+            Toast.makeText(this, "아직 완성되지 않은 수식입니다. ", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (expressionTexts[0].isNumber().not() || expressionTexts[2].isNumber().not()) {
+            Toast.makeText(this, "오류가 발생했습니다. ", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val expressionTExt = expressionTextView.text.toString()
+        val resultText = calculaterExpression()
+
+        resultTextView.text = ""
+        expressionTextView.text = resultText
+
+        isOperator = false
+        hasOperator = false
     }
 
     fun historyButtonClicked(v: View) {
 
     }
 
-    fun clearButtonClicked(v: View) {
+    private fun calculaterExpression(): String {
+        val expressionTexts = expressionTextView.text.split(" ")
 
+        if (hasOperator.not() || expressionTexts.size != 3) {
+            return ""
+        } else if (expressionTexts[0].isNumber().not() || expressionTexts[2].isNumber().not()) {
+            return ""
+        }
+        val exp1 = expressionTexts[0].toBigInteger()
+        val exp2 = expressionTexts[2].toBigInteger()
+        val op = expressionTexts[1]
+
+        return when (op) {
+            "+" -> (exp1 + exp2).toString()
+            "-" -> (exp1 - exp2).toString()
+            "*" -> (exp1 * exp2).toString()
+            "/" -> (exp1 / exp2).toString()
+            "%" -> (exp1 % exp2).toString()
+            else -> ""
+        }
+    }
+
+    fun clearButtonClicked(v: View) {
+        expressionTextView.text = ""
+        resultTextView.text = ""
+        isOperator = false
+        hasOperator = false
+    }
+}
+
+fun String.isNumber(): Boolean {
+    return try {
+        this.toBigInteger()
+        true
+    } catch (e: NumberFormatException) {
+        false
     }
 }
