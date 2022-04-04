@@ -9,7 +9,6 @@ import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.core.widget.addTextChangedListener
-import com.example.aop_part2_chater03.R
 
 class DiaryActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
@@ -19,9 +18,9 @@ class DiaryActivity : AppCompatActivity() {
         setContentView(R.layout.activity_diary)
 
         val diaryEditText = findViewById<EditText>(R.id.diaryEditText)
-        val detailPrefrences = getSharedPreferences("diary", Context.MODE_PRIVATE)
+        val detailPreferences = getSharedPreferences("diary", Context.MODE_PRIVATE)
 
-        diaryEditText.setText(detailPrefrences.getString("detail", ""))
+        diaryEditText.setText(detailPreferences.getString("detail", ""))
 
         val runnable = Runnable {
             getSharedPreferences("diary", Context.MODE_PRIVATE).edit {
