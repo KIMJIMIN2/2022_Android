@@ -2,6 +2,7 @@ package com.example.aop_part3_chapter05
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -15,6 +16,7 @@ import com.facebook.login.widget.LoginButton
 import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 
 class LoginActivity : AppCompatActivity() {
@@ -45,7 +47,7 @@ class LoginActivity : AppCompatActivity() {
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        finish()
+                        handleSuccessLogin()
                     } else {
                         Toast.makeText(
                             this,
@@ -112,11 +114,15 @@ class LoginActivity : AppCompatActivity() {
                     // 로그인이 성공적
                     val credential = FacebookAuthProvider.getCredential(result.accessToken.token)
                     auth.signInWithCredential(credential)
-                        .addOnCompleteListener(this@LoginActivity){ task->
-                            if(task.isSuccessful){
-                                finish()
-                            }else{
-                                Toast.makeText(this@LoginActivity,"페이스북 로그인이 실패하였습니다.", Toast.LENGTH_SHORT)
+                        .addOnCompleteListener(this@LoginActivity) { task ->
+                            if (task.isSuccessful) {
+                                handleSuccessLogin()
+                            } else {
+                                Toast.makeText(
+                                    this@LoginActivity,
+                                    "페이스북 로그인이 실패하였습니다.",
+                                    Toast.LENGTH_SHORT
+                                )
                                     .show()
                             }
                         }
@@ -140,6 +146,20 @@ class LoginActivity : AppCompatActivity() {
 
     private fun getInputPassword(): String {
         return findViewById<EditText>(R.id.passwordEditText).text.toString()
+    }
+
+    private fun handleSuccessLogin() {
+        if (auth.currentUser == null) {
+            Toast.makeText(this, "로그인에 실패했습니다.", Toast.LENGTH_SHORT)
+                .show()
+            return
+        }
+        val userId = auth.currentUser?.uid.orEmpty()
+        val currentUserDB = Firebase.database.reference.child("Users").child(userId)
+        var user = mutableMapOf<String, Any>()
+        user["userId"] = userId
+        currentUserDB.updateChildren(user)
+        Log.d("handleSuccess", "로그인이 성공적으로 처리되었습니다.")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
